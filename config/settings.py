@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -53,7 +54,7 @@ INSTALLED_APPS = [
     'assets',
     'users',
     'equipment',
-    # 'jobs',
+    'jobs',
     # 'dashboard',
 ]
 
@@ -163,12 +164,12 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Celery (broker/backend URLs are environment-specific)
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/1")
+
+CELERY_BROKER_URL = "redis://localhost:6379/0"
 CELERY_BEAT_SCHEDULE = {
-    "jobs.check_overdue": {
-                "task": "jobs.tasks.flag_overdue_jobs",
-                "schedule": 60.0, # every minute
-        }
-    }
+    "update-overdue-jobs-every-midnight": {
+        "task": "jobs.tasks.update_overdue_jobs",
+        "schedule": crontab(hour=0, minute=0),  # every day at midnight
+    },
+}
+
